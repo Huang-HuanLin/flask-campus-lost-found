@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>搜索结果 - 校园失物招领</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">校园失物招领</a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="/">首页</a>
+                <a class="nav-link" href="/lost_notice">寻物启事</a>
+                {% if current_user.is_authenticated %}
+                <a class="nav-link" href="/report">发布招领</a>
+                <a class="nav-link" href="/profile">个人中心</a>
+                <a class="nav-link" href="/notifications">通知{% if unread_count > 0 %}<span class="badge bg-danger">{{ unread_count }}</span>{% endif %}</a>
+                {% if current_user.is_admin %}
+                <a class="nav-link" href="/admin">管理后台</a>
+                {% endif %}
+                <a class="nav-link" href="/logout">退出登录</a>
+                {% else %}
+                <a class="nav-link" href="/login">登录</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <h2>搜索结果</h2>
+        
+        <form action="/search" method="GET" class="mb-4">
+            <div class="row">
+                <div class="col-md-6">
+                    <input type="text" class="form-control" name="keyword" value="{{ keyword }}" placeholder="搜索物品名称、描述、地点">
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" name="category">
+                        <option value="">全分类</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat }}" {% if request.args.get('category') == cat %}selected{% endif %}>{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary">搜索</button>
+                    <a href="/" class="btn btn-secondary">返回首页</a>
+                </div>
+            </div>
+        </form>
+
+        {% if keyword %}
+        <p>搜索关键词：{{ keyword }}，找到 {{ items|length }} 条结果</p>
+        {% endif %}
+
+        {% if items %}
+        <div class="row">
+            {% for item in items %}
+            <div class="col-md-4 mb-4">
+                <div class="card item-card">
+                    {% if item.image_filename %}
+                    <img src="{{ url_for('static', filename='uploads/' + item.image_filename) }}" class="card-img-top" style="height:200px;object-fit:cover;">
+                    {% else %}
+                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height:200px;">
+                        <span class="text-muted">暂无图片</span>
+                    </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title"><a href="/item/{{ item.id }}">{{ item.name }}</a></h5>
+                        <p class="card-text text-muted">{{ item.category }}</p>
+                        <p class="card-text"><small>发现地点：{{ item.location }}</small></p>
+                        <p class="card-text"><small>发现时间：{{ item.found_time.strftime('%Y-%m-%d %H:%M') }}</small></p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-info">未找到相关物品</div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

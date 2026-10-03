@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>发布寻物启事 - 校园失物招领</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">校园失物招领</a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="/">首页</a>
+                <a class="nav-link" href="/lost_notice">寻物启事</a>
+                <a class="nav-link" href="/report">发布招领</a>
+                <a class="nav-link" href="/profile">个人中心</a>
+                <a class="nav-link" href="/logout">退出登录</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4>发布寻物启事</h4>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label class="form-label">物品名称 *</label>
+                                <input type="text" class="form-control" name="name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">物品描述</label>
+                                <textarea class="form-control" name="description" rows="3"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">分类 *</label>
+                                <select class="form-select" name="category" required>
+                                    {% for cat in categories %}
+                                    <option value="{{ cat }}">{{ cat }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">丢失地点</label>
+                                <input type="text" class="form-control" name="location">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">丢失时间 *</label>
+                                <input type="datetime-local" class="form-control" name="lost_time" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">物品图片</label>
+                                <input type="file" class="form-control" name="image" accept="image/*">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">联系人姓名 *</label>
+                                <input type="text" class="form-control" name="contact_name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">联系电话 *</label>
+                                <input type="tel" class="form-control" name="contact_phone" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">发布</button>
+                            <a href="/lost_notice" class="btn btn-secondary">返回</a>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

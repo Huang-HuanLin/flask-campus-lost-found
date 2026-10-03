@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ notice.name }} - 寻物启事</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">校园失物招领</a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="/">首页</a>
+                <a class="nav-link active" href="/lost_notice">寻物启事</a>
+                {% if current_user.is_authenticated %}
+                <a class="nav-link" href="/report">发布招领</a>
+                <a class="nav-link" href="/profile">个人中心</a>
+                <a class="nav-link" href="/logout">退出登录</a>
+                {% else %}
+                <a class="nav-link" href="/login">登录</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <div class="row">
+            <div class="col-md-6">
+                {% if notice.image_filename %}
+                <img src="{{ url_for('static', filename='uploads/' + notice.image_filename) }}" class="img-fluid rounded">
+                {% else %}
+                <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height:400px;">
+                    <span class="text-muted">暂无图片</span>
+                </div>
+                {% endif %}
+            </div>
+            <div class="col-md-6">
+                <h2>{{ notice.name }}</h2>
+                <div class="mt-4">
+                    <p><strong>分类：</strong>{{ notice.category }}</p>
+                    <p><strong>丢失地点：</strong>{{ notice.location }}</p>
+                    <p><strong>丢失时间：</strong>{{ notice.lost_time.strftime('%Y-%m-%d %H:%M') }}</p>
+                    <p><strong>状态：</strong>
+                        {% if notice.status == 'searching' %}
+                        <span class="badge bg-warning">正在寻找</span>
+                        {% else %}
+                        <span class="badge bg-success">已找到</span>
+                        {% endif %}
+                    </p>
+                    {% if notice.description %}
+                    <p><strong>物品描述：</strong>{{ notice.description }}</p>
+                    {% endif %}
+                    <p><strong>发布人：</strong>{{ notice.user.username }}</p>
+                    <p><strong>联系人：</strong>{{ notice.contact_name }}</p>
+                    <p><strong>联系电话：</strong>{{ notice.contact_phone }}</p>
+                    <p><strong>发布时间：</strong>{{ notice.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                </div>
+
+                {% if current_user.is_authenticated and notice.user_id == current_user.id and notice.status == 'searching' %}
+                <a href="/lost_notice/found/{{ notice.id }}" class="btn btn-success mt-4">标记已找到</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 评论区域 -->
+        <div class="row mt-5">
+            <div class="col-md-12">
+                <h3>评论 ({{ comments|length }})</h3>
+                
+                <!-- 发表评论 -->
+                {% if current_user.is_authenticated %}
+                <form action="/lost_notice/comment/{{ notice.id }}" method="POST" class="mt-4">
+                    <div class="mb-3">
+                        <textarea class="form-control" name="content" rows="3" placeholder="发表评论..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">发布评论</button>
+                </form>
+                {% else %}
+                <p class="text-muted mt-4">请登录后发表评论</p>
+                {% endif %}
+
+                <!-- 评论列表 -->
+                <div class="mt-4">
+                    {% if comments %}
+                    {% for comment in comments %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <strong>{{ comment.user.username }}</strong>
+                                <small class="text-muted">{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                            </div>
+                            <p class="mt-2">{{ comment.content }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="alert alert-info">暂无评论</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

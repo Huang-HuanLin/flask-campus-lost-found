@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ item.name }} - 校园失物招领</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">校园失物招领</a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="/">首页</a>
+                <a class="nav-link" href="/lost_notice">寻物启事</a>
+                {% if current_user.is_authenticated %}
+                <a class="nav-link" href="/report">发布招领</a>
+                <a class="nav-link" href="/profile">个人中心</a>
+                <a class="nav-link" href="/notifications">通知{% if unread_count > 0 %}<span class="badge bg-danger">{{ unread_count }}</span>{% endif %}</a>
+                {% if current_user.is_admin %}
+                <a class="nav-link" href="/admin">管理后台</a>
+                {% endif %}
+                <a class="nav-link" href="/logout">退出登录</a>
+                {% else %}
+                <a class="nav-link" href="/login">登录</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <div class="row">
+            <div class="col-md-6">
+                {% if item.image_filename %}
+                <img src="{{ url_for('static', filename='uploads/' + item.image_filename) }}" 
+                     class="img-fluid rounded" alt="{{ item.name }}">
+                {% else %}
+                <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 400px;">
+                    <span class="text-muted">暂无图片</span>
+                </div>
+                {% endif %}
+            </div>
+            <div class="col-md-6">
+                <h2>{{ item.name }}</h2>
+                <div class="mt-4">
+                    <p><strong>分类：</strong>{{ item.category }}</p>
+                    <p><strong>发现地点：</strong>{{ item.location }}</p>
+                    <p><strong>发现时间：</strong>{{ item.found_time.strftime('%Y-%m-%d %H:%M') }}</p>
+                    <p><strong>状态：</strong>
+                        {% if item.status == 'pending' %}
+                        <span class="badge bg-warning">待认领</span>
+                        {% elif item.status == 'claimed' %}
+                        <span class="badge bg-info">已有人认领</span>
+                        {% elif item.status == 'confirmed' %}
+                        <span class="badge bg-success">已确认领走</span>
+                        {% endif %}
+                    </p>
+                    {% if item.description %}
+                    <p><strong>物品描述：</strong>{{ item.description }}</p>
+                    {% endif %}
+                    <p><strong>发布人：</strong>{{ item.reporter.username }}</p>
+                    {% if item.status == 'claimed' and (current_user.id == item.reporter_id or current_user.is_admin) %}
+                    <div class="alert alert-info mt-3">
+                        <strong>认领者信息：</strong>
+                        <p>姓名：{{ item.claimer_name }}</p>
+                        <p>联系方式：{{ item.claimer_phone }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="mt-4">
+                    {% if item.status == 'pending' %}
+                    {% if current_user.is_authenticated %}
+                    <a href="/claim/{{ item.id }}" class="btn btn-primary">认领此物品</a>
+                    {% else %}
+                    <a href="/login" class="btn btn-primary">登录后认领</a>
+                    {% endif %}
+                    {% elif item.status == 'claimed' %}
+                    {% if current_user.id == item.reporter_id or current_user.is_admin %}
+                    <a href="/confirm/{{ item.id }}" class="btn btn-success">确认领走</a>
+                    {% endif %}
+                    <a href="/cancel_claim/{{ item.id }}" class="btn btn-secondary">撤销认领</a>
+                    {% endif %}
+                    
+                    {% if current_user.id == item.reporter_id or current_user.is_admin %}
+                    <a href="/item/edit/{{ item.id }}" class="btn btn-outline-primary">编辑</a>
+                    <a href="/item/delete/{{ item.id }}" class="btn btn-outline-danger">删除</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 评论区域 -->
+        <div class="row mt-5">
+            <div class="col-md-12">
+                <h4>评论区</h4>
+                
+                {% if current_user.is_authenticated %}
+                <form action="/item/{{ item.id }}/comment" method="POST" class="mb-4">
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="content" placeholder="发表评论..." required>
+                        <button class="btn btn-primary" type="submit">发布</button>
+                    </div>
+                </form>
+                {% else %}
+                <p class="text-muted"><a href="/login">登录</a>后可发表评论</p>
+                {% endif %}
+                
+                {% if item.comments %}
+                <div class="list-group">
+                    {% for comment in item.comments %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <strong>{{ comment.user.username }}</strong>
+                                <small class="text-muted ms-2">{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                            </div>
+                            {% if current_user.id == comment.user_id or current_user.is_admin %}
+                            <a href="/comment/delete/{{ comment.id }}" class="btn btn-sm btn-outline-danger">删除</a>
+                            {% endif %}
+                        </div>
+                        <p class="mt-2">{{ comment.content }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">暂无评论</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
